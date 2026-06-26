@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ایدوس | بستر اشتراک ایده</title>
+  <meta name="description" content="ایدوس — پلتفرمی برای به اشتراک‌گذاری ایده‌های ناب ایرانیان">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+
+  <!-- ===================== NAVBAR ===================== -->
+  <nav id="navbar">
+    <div class="nav-logo" onclick="showHome(); loadIdeas()" style="cursor:pointer;">
+      EIDOS<span>.</span>
+    </div>
+    <div class="nav-actions">
+      <!-- Guest -->
+      <div id="nav-guest">
+        <button class="btn btn-outline" onclick="openAuthModal('login')">ورود</button>
+        <button class="btn btn-copper" onclick="openAuthModal('register')">ثبت‌نام</button>
+      </div>
+      <!-- Logged in -->
+      <div id="nav-user">
+        <button class="btn btn-teal btn-primary" onclick="openNewIdeaModal()">
+          ＋ ثبت ایده جدید
+        </button>
+        <span class="nav-admin-link" id="nav-admin-link" style="display:none;" onclick="showAdmin()">پنل مدیریت</span>
+        <span class="nav-username" onclick="showProfile(currentUser?.username)" id="nav-username">کاربر</span>
+        <span id="admin-badge" class="admin-badge" style="display:none;">ADMIN</span>
+        <button class="btn btn-outline btn-sm" onclick="logout()">خروج</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section id="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">EIDOS</h1>
+      <p class="hero-sub">The Idea Platform</p>
+
+      <div class="hero-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="hero-search-input" placeholder="جستجوی کاربر یا ایده..." oninput="filterIdeas(this.value)">
+      </div>
+
+      <div class="sort-tabs" style="justify-content:center;">
+        <button class="sort-tab" data-sort="trending" onclick="loadIdeas('trending')">Trending</button>
+        <button class="sort-tab active" data-sort="latest" onclick="loadIdeas('latest')">Latest</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MAIN ===================== -->
+  <main id="main">
+    <div id="ideas-grid">
+      <div class="loading"><div class="spinner"></div>در حال بارگذاری...</div>
+    </div>
+  </main>
+
+  <!-- ===================== PROFILE PAGE ===================== -->
+  <div id="profile-page">
+    <div id="profile-content"></div>
+  </div>
+
+  <!-- ===================== ADMIN PAGE ===================== -->
+  <div id="admin-page">
+    <div id="admin-content"></div>
+  </div>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer id="footer">
+    <div class="footer-grid">
+      <div class="footer-section">
+        <h4>ABOUT US</h4>
+        <p>ایدوس با هدف عمل به مسئولیت اجتماعی و مشارکت دادن همه ایرانیان در ساخت و توسعه کشور شکل گرفته است. این پلتفرم بستری فراهم می‌کند تا افراد بتوانند ایده‌های خود را به اشتراک بگذارند. ایدوس صاحبان ایده را به مجریان، سرمایه‌گذاران و کسانی که توانایی عملی‌کردن آن‌ها را دارند متصل می‌کند.</p>
+      </div>
+      <div class="footer-section">
+        <h4>ABOUT EIDOS</h4>
+        <p>ایدوس (Eidos) در فلسفه افلاطون به «صورت» یا «ایدهٔ ناب» هر چیز گفته می‌شود؛ یعنی حقیقت کامل و تغییرناپذیر آن چیز. در اندیشهٔ کلاسیک، «ایدوس» به مفهوم صورت کامل هر پدیده اشاره دارد — بستری که در آن ایده‌ها امکان دیده‌شدن، رشد و طی مسیر تا مرحلهٔ اجرا را می‌یابند.</p>
+      </div>
+      <div class="footer-section">
+        <h4>CONTACT US</h4>
+        <p>
+          <a href="mailto:sabaarastoo0@gmail.com">sabaarastoo0@gmail.com</a><br>
+          <a href="tel:+989120970959">۰۹۱۲۰۹۷۰۹۵۹</a>
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-logo">EIDOS<span>.</span></span>
+      <span>© ۱۴۰۴ ایدوس — تمام حقوق محفوظ است</span>
+    </div>
+  </footer>
+
+  <!-- ===================== TOAST ===================== -->
+  <div id="toast"></div>
+
+  <!-- ===================== AUTH MODAL ===================== -->
+  <div id="auth-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>ایدوس</h2>
+        <button class="modal-close" onclick="closeAuthModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="auth-tabs">
+          <button class="auth-tab" data-tab="login" onclick="switchAuthTab('login')">ورود</button>
+          <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">ثبت‌نام</button>
+        </div>
+
+        <div id="form-login" class="auth-form">
+          <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label>ایمیل یا نام کاربری</label>
+              <input type="text" id="login-identifier" placeholder="ایمیل یا نام کاربری" required>
+            </div>
+            <div class="form-group">
+              <label>رمز عبور</label>
+              <input type="password" id="login-password" placeholder="رمز عبور" required>
+            </div>
+            <div class="form-error" id="login-error"></div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">ورود</button>
+          </form>
+          <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-light);">
+            حساب ندارید؟ <a href="#" onclick="switchAuthTab('register')">ثبت‌نام کنید</a>
+          </p>
+        </div>
+
+        <div id="form-register" class="auth-form">
+          <form onsubmit="handleRegister(event)">
+            <div class="form-group">
+              <label>نام کاربری <span class="req">*</span></label>
+              <input type="text" id="reg-username" placeholder="نام کاربری" required minlength="3">
+            </div>
+            <div class="form-group">
+              <label>ایمیل <span class="req">*</span></label>
+              <input type="email" id="reg-email" placeholder="ایمیل" required>
+            </div>
+            <div class="form-group">
+              <label>رمز عبور <span class="req">*</span></label>
+              <input type="password" id="reg-password" placeholder="حداقل ۸ کاراکتر" required minlength="8">
+            </div>
+            <div class="form-group">
+              <label>تکرار رمز عبور <span class="req">*</span></label>
+              <input type="password" id="reg-confirm" placeholder="تکرار رمز عبور" required>
+            </div>
+            <div class="form-error" id="reg-error"></div>
+            <button type="submit" class="btn btn-copper" style="width:100%;justify-content:center;margin-top:0.5rem;">ثبت‌نام</button>
+          </form>
+          <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-light);">
+            حساب دارید؟ <a href="#" onclick="switchAuthTab('login')">وارد شوید</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== IDEA DETAIL MODAL ===================== -->
+  <div id="idea-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width:720px;">
+      <div class="modal-header">
+        <h2>جزئیات ایده</h2>
+        <button class="modal-close" onclick="closeIdeaModal()">×</button>
+      </div>
+      <div id="idea-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ===================== AI ASSISTANT CHAT MODAL ===================== -->
+  <div id="ai-chat-modal" class="modal-overlay ai-chat-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>🤖 دستیار هوش مصنوعی ایدوس</h2>
+        <button class="modal-close" onclick="closeAiChatModal()">×</button>
+      </div>
+
+      <div class="ai-progress-bar-wrap">
+        <div class="ai-progress-label">
+          <span>پیشرفت تکمیل فرم</span>
+          <span id="ai-progress-text">۰ از ۲۱ بخش</span>
+        </div>
+        <div class="ai-progress-track"><div class="ai-progress-fill" id="ai-progress-fill" style="width:0%;"></div></div>
+      </div>
+
+      <div class="ai-chat-window" id="ai-chat-window"></div>
+
+      <form class="ai-chat-input-row" onsubmit="sendAiMessage(event)">
+        <input type="text" id="ai-chat-input" placeholder="ایده‌ات رو توصیف کن یا به سؤال جواب بده..." autocomplete="off">
+        <button type="submit" class="btn btn-primary btn-sm">ارسال</button>
+      </form>
+
+      <div class="ai-chat-footer">
+        <span class="ai-chat-footer-hint">می‌توانید همیشه فرم را بعداً دستی ویرایش کنید</span>
+        <button type="button" class="btn btn-copper btn-sm" onclick="finishAiChatAndGoToForm()">رفتن به فرم ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== NEW IDEA MODAL ===================== -->
+  <div id="new-idea-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width:760px;">
+      <div class="modal-header">
+        <h2>ثبت ایده جدید</h2>
+        <button class="modal-close" onclick="closeNewIdeaModal()">×</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="ai-assist-banner">
+          <span class="ai-assist-banner-text">می‌خواهید <b>دستیار هوش مصنوعی</b> با چند سؤال به شما کمک کند فرم را پر کنید؟</span>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openAiChatModal()">🤖 شروع چت</button>
+        </div>
+        <div id="ai-fields-summary" style="margin-bottom:1rem;display:none;"></div>
+
+        <form id="new-idea-form" onsubmit="handleNewIdea(event)" enctype="multipart/form-data">
+
+          <div class="form-section"><h3>بخش ۱: اطلاعات اولیه ایده</h3></div>
+          <div class="form-group">
+            <label>عنوان ایده <span class="req">*</span></label>
+            <input type="text" name="title" id="field-title" placeholder="عنوان ایده خود را بنویسید" required>
+          </div>
+          <div class="form-group">
+            <label>حوزه ایده</label>
+            <input type="text" name="domain" id="field-domain" placeholder="مثلاً: آموزش، محیط زیست، فناوری، بهداشت...">
+          </div>
+          <div class="form-group">
+            <label>مشابه این ایده پیش از این توسط فرد دیگری اجرا شده است؟ تفاوت و شباهت را شرح دهید.</label>
+            <textarea name="similarIdea" id="field-similarIdea" placeholder="در صورت وجود توضیح دهید..."></textarea>
+          </div>
+
+          <div class="form-section"><h3>بخش ۲: خلاصه و تعریف مسئله</h3></div>
+          <div class="form-group">
+            <label>شرح ایده (حداکثر ۵ خط) <span class="req">*</span></label>
+            <textarea name="description" id="field-description" rows="4" placeholder="ایده خود را در حداکثر ۵ خط توضیح دهید..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>این ایده چه مسئله‌ای را حل می‌کند؟</label>
+            <textarea name="problemSolved" id="field-problemSolved" placeholder="مسئله‌ای که ایده حل می‌کند..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>چرا این مسئله اهمیت دارد؟ (ضرورت اجرا)</label>
+            <textarea name="importance" id="field-importance" placeholder="اهمیت و ضرورت اجرای ایده..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>اگر این ایده اجرا نشود چه پیامدی خواهد داشت؟</label>
+            <textarea name="consequences" id="field-consequences" placeholder="پیامدهای عدم اجرا..."></textarea>
+          </div>
+
+          <div class="form-section"><h3>بخش ۳: راه‌حل پیشنهادی</h3></div>
+          <div class="form-group">
+            <label>راه‌حل پیشنهادی شما چگونه عمل می‌کند؟</label>
+            <textarea name="solution" id="field-solution" placeholder="راه‌حل پیشنهادی..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>چه چیزی این ایده را متمایز می‌کند؟</label>
+            <textarea name="differentiator" id="field-differentiator" placeholder="وجه تمایز ایده..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>آیا نمونه اولیه یا مدل آزمایشی دارید؟</label>
+            <input type="text" name="prototype" id="field-prototype" placeholder="توضیح کوتاه یا لینک...">
+          </div>
+
+          <div class="form-section"><h3>بخش ۴: پیشنهاد اجرای ایده</h3></div>
+          <div class="form-group">
+            <label>مراحل اجرای ایده را به ترتیب توضیح دهید</label>
+            <textarea name="executionSteps" id="field-executionSteps" placeholder="مرحله اول: ...&#10;مرحله دوم: ..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>اجرا در چند فاز انجام می‌شود؟</label>
+            <input type="text" name="phases" id="field-phases" placeholder="مثلاً: ۳ فاز">
+          </div>
+          <div class="form-group">
+            <label>مدت زمان تقریبی اجرای هر فاز</label>
+            <input type="text" name="duration" id="field-duration" placeholder="مثلاً: فاز اول ۳ ماه، فاز دوم ۶ ماه">
+          </div>
+          <div class="form-group">
+            <label>چه منابعی (مالی، انسانی، فنی) نیاز است؟</label>
+            <textarea name="resources" id="field-resources" placeholder="منابع مورد نیاز..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>برآورد تقریبی هزینه اولیه</label>
+            <input type="text" name="budget" id="field-budget" placeholder="مثلاً: ۵۰ میلیون تومان">
+          </div>
+
+          <div class="form-section"><h3>بخش ۵: مخاطب و بازار</h3></div>
+          <div class="form-group">
+            <label>مخاطب اصلی این ایده چه کسانی هستند؟</label>
+            <textarea name="audience" id="field-audience" placeholder="مخاطبان اصلی..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>چه ارزشی برای مخاطب ایجاد می‌کند؟</label>
+            <textarea name="value" id="field-value" placeholder="ارزش پیشنهادی..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>آیا نمونه مشابه یا رقیب وجود دارد؟ تفاوت شما چیست؟</label>
+            <textarea name="competitors" id="field-competitors" placeholder="رقبا و تفاوت..."></textarea>
+          </div>
+
+          <div class="form-section"><h3>بخش ۶: ریسک و آینده</h3></div>
+          <div class="form-group">
+            <label>مهم‌ترین چالش‌های اجرا</label>
+            <textarea name="challenges" id="field-challenges" placeholder="چالش‌های اصلی..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>راهکار مدیریت این چالش‌ها</label>
+            <textarea name="riskManagement" id="field-riskManagement" placeholder="راهکارهای مدیریت ریسک..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>این ایده در ۵ سال آینده چگونه توسعه پیدا می‌کند؟</label>
+            <textarea name="futureVision" id="field-futureVision" placeholder="چشم‌انداز آینده..."></textarea>
+          </div>
+
+          <div class="form-section"><h3>بخش ۷: بارگذاری فایل (اختیاری)</h3></div>
+          <div class="form-group">
+            <label>فایل توضیحات تکمیلی (PDF)</label>
+            <input type="file" name="pdfFile" accept=".pdf" style="padding:0.4rem;">
+          </div>
+          <div class="form-group">
+            <label>تصویر / نمونه کار</label>
+            <input type="file" name="imageFile" accept="image/*" style="padding:0.4rem;">
+          </div>
+          <div class="form-group">
+            <label>لینک دمو</label>
+            <input type="url" name="demoLink" id="field-demoLink" placeholder="https://...">
+          </div>
+
+          <div class="form-error" id="idea-form-error"></div>
+          <div class="form-footer">
+            <button type="button" class="btn btn-outline-navy" onclick="closeNewIdeaModal()">انصراف</button>
+            <button type="submit" class="btn btn-primary">ثبت ایده ✓</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
